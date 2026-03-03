@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moiz's Music Vault</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <style>
+        body { background: #0b0b0b; color: #fff; font-family: sans-serif; padding: 20px; padding-bottom: 120px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .card { background: #181818; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid transparent; }
+        .card:hover { background: #282828; border-color: #1DB954; }
+        .cover { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; background: #333; margin-bottom: 8px; }
+        .title { font-weight: bold; font-size: 0.9rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .player-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #121212; padding: 15px; box-sizing: border-box; border-top: 1px solid #333; }
+        audio { width: 100%; filter: invert(1); }
+    </style>
+</head>
+<body>
+
+    <h1>Your Library</h1>
+    <div class="grid" id="library"></div>
+
+    <div class="player-bar">
+        <div id="now-playing" style="color: #1DB954; font-size: 0.8rem; margin-bottom: 8px;">Select a track...</div>
+        <audio id="audio-player" controls></audio>
+    </div>
+
+    <script>
+        // STEP: Add your file paths here EXACTLY as they appear in GitHub
+        const songFiles = [
+            'My Summer Hits/Song One.mp3',
+            'Late Night/Vibe Check.mp3'
+        ];
+
+        const library = document.getElementById('library');
+        const player = document.getElementById('audio-player');
+        const info = document.getElementById('now-playing');
+
+        songFiles.forEach(path => {
+            // MAGIC FIX: encodeURI handles the spaces for us!
+            const safePath = encodeURI(path);
+
+            window.jsmediatags.read(safePath, {
+                onSuccess: function(tag) {
+                    const { title, artist, picture } = tag.tags;
+                    
+                    let artUrl = "https://via.placeholder.com/150?text=No+Cover";
+                    if (picture) {
+                        const { data, format } = picture;
+                        let base = "";
+                        for (let i = 0; i < data.length; i++) base += String.fromCharCode(data[i]);
+                        artUrl = `data:${format};base64,${window.btoa(base)}`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.onclick = () => {
+                        player.src = safePath; // Uses the space-fixed link
+                        info.innerText = "Playing: " + (title || path);
+                        player.play();
+                    };
+                    card.innerHTML = `
+                        <img src="${artUrl}" class="cover">
+                        <span class="title">${title || path}</span>
+                    `;
+                    library.appendChild(card);
+                },
+                onError: function(error) {
+                    // Fallback if the file can't be read (still creates a card)
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.onclick = () => { player.src = safePath; player.play(); };
+                    card.innerHTML = `<div class="cover" style="display:flex;align-items:center;justify-content:center;">🎵</div><span class="title">${path}</span>`;
+                    library.appendChild(card);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
