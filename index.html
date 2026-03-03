@@ -3,87 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nobody's Music Vault</title>
+    <title>Moiz's Music Vault</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <style>
-        body { background: #0b0b0b; color: #fff; font-family: sans-serif; padding: 20px; padding-bottom: 120px; }
-        h1 { color: #1DB954; }
-        #searchBar { width: 100%; padding: 12px; margin-bottom: 20px; background: #181818; color: white; border: 1px solid #333; border-radius: 8px; box-sizing: border-box; }
+        body { background: #0b0b0b; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; padding-bottom: 140px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .card { background: #181818; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
-        .card:hover { background: #282828; border-color: #1DB954; }
+        .card { background: #181818; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; }
         .cover { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; background: #333; margin-bottom: 8px; }
-        .title { font-weight: bold; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .player-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #121212; border-top: 1px solid #333; padding: 15px; box-sizing: border-box; }
-        audio { width: 100%; filter: invert(1); }
-        #now-playing { color: #1DB954; font-size: 0.8rem; margin-bottom: 8px; }
+        
+        /* THE VIDEO PLAYER AREA */
+        .player-container { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: #000; border-top: 1px solid #333; 
+            display: flex; flex-direction: column; align-items: center; padding: 10px;
+        }
+        video { width: 100%; max-width: 400px; height: auto; border-radius: 10px; background: #000; }
+        #song-info { color: #1DB954; font-size: 0.8rem; margin: 5px 0; }
     </style>
 </head>
 <body>
 
     <h1>Your Library</h1>
-    
-    <input type="text" id="searchBar" placeholder="Search unreleased tracks...">
-
     <div class="grid" id="library"></div>
 
-    <div class="player-bar">
-        <div id="now-playing">Select a track to start...</div>
-        <audio id="audio-player" controls></audio>
+    <div class="player-container">
+        <div id="song-info">Select a track...</div>
+        <video id="main-player" controls playsinline></video>
     </div>
 
     <script>
-        // MUST MATCH YOUR GITHUB FOLDER NAME
         const folder = "unreleased misc/"; 
-
-        // EXACT FILENAMES FROM YOUR SCREENSHOT
         const songFiles = [
-            "1-01 Rocket Love.m4a",
-            "1-02 Time Machine.m4a",
-            "1-03 Heartbreak & Jet Lag.m4a",
-            "1-04 Bedtime Story.m4a",
-            "1-05 Voodoo.m4a",
-            "1-06 White.m4a",
-            "1-07 No Love.m4a",
-            "1-08 4 Tears.m4a",
-            "1-09 Acura Integurl.m4a",
+            "1-01 Rocket Love.m4a", "1-02 Time Machine.m4a", "1-03 Heartbreak & Jet Lag.m4a",
+            "1-04 Bedtime Story.m4a", "1-05 Voodoo.m4a", "1-06 White.m4a",
+            "1-07 No Love.m4a", "1-08 4 Tears.m4a", "1-09 Acura Integurl.m4a",
             "1-10 Analog 2 (feat. Tyler, the Creator & Syd).m4a"
         ];
 
         const library = document.getElementById('library');
-        const player = document.getElementById('audio-player');
-        const info = document.getElementById('now-playing');
+        const player = document.getElementById('main-player');
+        const info = document.getElementById('song-info');
 
         songFiles.forEach(fileName => {
-            const fullPath = folder + fileName;
-            // encodeURI handles the spaces for Rave and GitHub
-            const safePath = encodeURI(fullPath);
+            const safePath = encodeURI(folder + fileName);
 
-            // Create the card for each song
+            window.jsmediatags.read(safePath, {
+                onSuccess: function(tag) {
+                    const { picture } = tag.tags;
+                    let artUrl = "https://via.placeholder.com/400?text=Music";
+                    if (picture) {
+                        const { data, format } = picture;
+                        let base = "";
+                        for (let i = 0; i < data.length; i++) base += String.fromCharCode(data[i]);
+                        artUrl = `data:${format};base64,${window.btoa(base)}`;
+                    }
+                    createCard(safePath, fileName, artUrl);
+                },
+                onError: () => createCard(safePath, fileName, "https://via.placeholder.com/400?text=Music")
+            });
+        });
+
+        function createCard(path, name, img) {
             const card = document.createElement('div');
             card.className = 'card';
             card.onclick = () => {
-                player.src = safePath;
-                info.innerText = "Playing: " + fileName;
+                player.src = path;
+                player.poster = img; // Sets the album cover as the "video" background
+                info.innerText = "Playing: " + name;
                 player.play();
             };
-            
-            // Placeholder UI while loading
-            card.innerHTML = `
-                <div class="cover" style="display:flex;align-items:center;justify-content:center;background:#333;color:#1DB954;font-size:2rem;">🎵</div>
-                <span class="title">${fileName}</span>
-            `;
+            card.innerHTML = `<img src="${img}" class="cover"><span>${name}</span>`;
             library.appendChild(card);
-        });
-
-        // Search logic
-        document.getElementById('searchBar').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            document.querySelectorAll('.card').forEach(card => {
-                const text = card.innerText.toLowerCase();
-                card.style.display = text.includes(term) ? 'block' : 'none';
-            });
-        });
+        }
     </script>
 </body>
 </html>
