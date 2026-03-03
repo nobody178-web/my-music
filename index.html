@@ -3,45 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moiz's Music Vault</title>
+    <title>Unholycucumber Music Vault</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <style>
         body { background: #0b0b0b; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; padding-bottom: 220px; }
-        h1 { color: #1DB954; text-align: center; }
+        h1 { color: #1DB954; text-align: center; font-family: 'Courier New', Courier, monospace; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
-        .card { background: #181818; padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid #333; }
-        .card:hover { border-color: #1DB954; background: #222; }
+        .card { background: #181818; padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
+        .card:hover { border-color: #1DB954; transform: scale(1.05); }
         .cover { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; background: #333; margin-bottom: 8px; }
         .title { font-size: 0.75rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        /* PLAYER CONTAINER - FIXED TO BOTTOM */
         .player-container { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: #121212; border-top: 2px solid #333; 
+            background: #121212; border-top: 2px solid #1DB954; 
             display: flex; flex-direction: column; align-items: center; 
-            padding: 15px; box-sizing: border-box; z-index: 1000;
+            padding: 15px; box-index: 1000; box-sizing: border-box;
         }
-        video { width: 100%; max-width: 320px; height: 180px; border-radius: 8px; background: #000; margin-bottom: 10px; }
-        #song-info { color: #1DB954; font-size: 0.9rem; font-weight: bold; text-align: center; }
+        video { width: 100%; max-width: 320px; height: 180px; border-radius: 8px; background: #000; }
+        #song-info { color: #1DB954; font-size: 0.9rem; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>Your Library</h1>
+    <h1>Unholycucumber Music Vault</h1>
     <div class="grid" id="library"></div>
 
     <div class="player-container">
-        <div id="song-info">Select a track...</div>
         <video id="main-player" controls playsinline poster=""></video>
+        <div id="song-info">Select a track...</div>
     </div>
 
     <script>
         const folder = "unreleased misc/"; 
+        
+        // Updated with your Ivy test video
         const songFiles = [
-            "Frank Ocean - Ivy"
-            "1-01 Rocket Love.m4a", "1-02 Time Machine.m4a", "1-03 Heartbreak & Jet Lag.m4a",
-            "1-04 Bedtime Story.m4a", "1-05 Voodoo.m4a", "1-06 White.m4a",
-            "1-07 No Love.m4a", "1-08 4 Tears.m4a", "1-09 Acura Integurl.m4a",
+            "Frank Ocean - Ivy.mp4",
+            "1-01 Rocket Love.m4a",
+            "1-02 Time Machine.m4a",
+            "1-03 Heartbreak & Jet Lag.m4a",
+            "1-04 Bedtime Story.m4a",
+            "1-05 Voodoo.m4a",
+            "1-06 White.m4a",
+            "1-07 No Love.m4a",
+            "1-08 4 Tears.m4a",
+            "1-09 Acura Integurl.m4a",
             "1-10 Analog 2 (feat. Tyler, the Creator & Syd).m4a"
         ];
 
@@ -51,20 +58,17 @@
 
         songFiles.forEach(fileName => {
             const safePath = encodeURI(folder + fileName);
-            
-            // Create UI Card instantly
             const card = document.createElement('div');
             card.className = 'card';
             
-            // Default placeholder
-            const defaultArt = "https://via.placeholder.com/150?text=Song";
+            // Default icon
+            const defaultArt = "https://via.placeholder.com/150/1DB954/FFFFFF?text=Music";
 
             card.innerHTML = `
                 <img src="${defaultArt}" class="cover">
-                <span class="title">${fileName}</span>
+                <span class="title">${fileName.replace('.m4a', '').replace('.mp4', '')}</span>
             `;
 
-            // When clicked, update the video player
             card.onclick = function() {
                 player.src = safePath;
                 player.poster = card.querySelector('img').src; 
@@ -74,7 +78,7 @@
 
             library.appendChild(card);
 
-            // Attempt to load metadata (covers) in the background
+            // Attempt to load metadata (covers)
             try {
                 jsmediatags.read(safePath, {
                     onSuccess: function(tag) {
@@ -86,10 +90,9 @@
                             const artUrl = `data:${format};base64,${window.btoa(base)}`;
                             card.querySelector('img').src = artUrl;
                         }
-                    },
-                    onError: function(err) { console.log("Cover art error:", err); }
+                    }
                 });
-            } catch (e) { console.log("jsmediatags skip"); }
+            } catch (e) { console.log("Skip tags"); }
         });
     </script>
 </body>
