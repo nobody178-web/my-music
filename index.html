@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moiz's Music Vault</title>
+    <title>Nobody's Music Vault</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <style>
         body { background: #0b0b0b; color: #fff; font-family: sans-serif; padding: 20px; padding-bottom: 120px; }
@@ -33,8 +33,10 @@
     </div>
 
     <script>
-        // EXACT PATHS from your screenshot
-        const folder = "unreleased misc/";
+        // MUST MATCH YOUR GITHUB FOLDER NAME
+        const folder = "unreleased misc/"; 
+
+        // EXACT FILENAMES FROM YOUR SCREENSHOT
         const songFiles = [
             "1-01 Rocket Love.m4a",
             "1-02 Time Machine.m4a",
@@ -54,44 +56,32 @@
 
         songFiles.forEach(fileName => {
             const fullPath = folder + fileName;
+            // encodeURI handles the spaces for Rave and GitHub
             const safePath = encodeURI(fullPath);
 
-            window.jsmediatags.read(safePath, {
-                onSuccess: function(tag) {
-                    const { title, picture } = tag.tags;
-                    let artUrl = "https://via.placeholder.com/150?text=M4A";
-                    if (picture) {
-                        const { data, format } = picture;
-                        let base = "";
-                        for (let i = 0; i < data.length; i++) base += String.fromCharCode(data[i]);
-                        artUrl = `data:${format};base64,${window.btoa(base)}`;
-                    }
-
-                    createCard(safePath, title || fileName, artUrl);
-                },
-                onError: function() {
-                    createCard(safePath, fileName, "https://via.placeholder.com/150?text=Music");
-                }
-            });
-        });
-
-        function createCard(path, displayTitle, img) {
+            // Create the card for each song
             const card = document.createElement('div');
             card.className = 'card';
             card.onclick = () => {
-                player.src = path;
-                info.innerText = "Playing: " + displayTitle;
+                player.src = safePath;
+                info.innerText = "Playing: " + fileName;
                 player.play();
             };
-            card.innerHTML = `<img src="${img}" class="cover"><span class="title">${displayTitle}</span>`;
+            
+            // Placeholder UI while loading
+            card.innerHTML = `
+                <div class="cover" style="display:flex;align-items:center;justify-content:center;background:#333;color:#1DB954;font-size:2rem;">🎵</div>
+                <span class="title">${fileName}</span>
+            `;
             library.appendChild(card);
-        }
+        });
 
         // Search logic
         document.getElementById('searchBar').addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
             document.querySelectorAll('.card').forEach(card => {
-                card.style.display = card.innerText.toLowerCase().includes(term) ? 'block' : 'none';
+                const text = card.innerText.toLowerCase();
+                card.style.display = text.includes(term) ? 'block' : 'none';
             });
         });
     </script>
