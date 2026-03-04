@@ -2,98 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unholycucumber Music Vault</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <title>Unholycucumber Unreleased Vault</title>
     <style>
-        body { background: #0b0b0b; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; padding-bottom: 220px; }
-        h1 { color: #1DB954; text-align: center; font-family: 'Courier New', Courier, monospace; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
-        .card { background: #181818; padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
-        .card:hover { border-color: #1DB954; transform: scale(1.05); }
-        .cover { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; background: #333; margin-bottom: 8px; }
-        .title { font-size: 0.75rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        .player-container { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: #121212; border-top: 2px solid #1DB954; 
-            display: flex; flex-direction: column; align-items: center; 
-            padding: 15px; box-index: 1000; box-sizing: border-box;
-        }
-        video { width: 100%; max-width: 320px; height: 180px; border-radius: 8px; background: #000; }
-        #song-info { color: #1DB954; font-size: 0.9rem; margin-top: 10px; font-weight: bold; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; text-align: center; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        video { width: 100%; border: 2px solid #0f0; box-shadow: 0 0 15px #0f0; border-radius: 8px; }
+        #playlist { margin-top: 30px; list-style: none; padding: 0; text-align: left; }
+        .song-btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 100%; cursor: pointer; text-align: left; }
+        .song-btn:hover { background: #0f0; color: #000; }
+        .playing { background: #0f0 !important; color: #000 !important; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>Unholycucumber Music Vault</h1>
-    <div class="grid" id="library"></div>
+<div class="container">
+    <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
+    
+    <video id="mainPlayer" controls autoplay>
+        <source id="videoSource" src="" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
 
-    <div class="player-container">
-        <video id="main-player" controls playsinline poster=""></video>
-        <div id="song-info">Select a track...</div>
-    </div>
+    <h3 id="nowPlaying">Loading Playlist...</h3>
 
-    <script>
-        const folder = "unreleased misc/"; 
+    <div id="playlist">
+        </div>
+</div>
+
+<script>
+    // 1. LIST ALL YOUR FILENAMES HERE
+    // Use the exact names from your 'Rave_Ready_Videos' folder
+    const folderPath = "Rave_Ready_Videos/";
+    const songs = [
+        "1-05 Voodoo.mp4",
+        "2-06 Girlfriend_s Best Friend.mp4",
+        "2-07 Good Decoration.mp4",
+        "1-01 Rocket Love.mp4",
+        "1-10 Analog 2.mp4" 
+        // Add all 10+ names here!
+    ];
+
+    let currentIndex = 0;
+    const player = document.getElementById('mainPlayer');
+    const source = document.getElementById('videoSource');
+    const label = document.getElementById('nowPlaying');
+    const playlistDiv = document.getElementById('playlist');
+
+    // 2. Load the first song automatically
+    function loadSong(index) {
+        if (index >= songs.length) index = 0; // Loop back to the first song
+        currentIndex = index;
         
-        // Updated with your Ivy test video
-        const songFiles = [
-            "Frank Ocean - Ivy.mp4",
-            "1-01 Rocket Love.m4a",
-            "1-02 Time Machine.m4a",
-            "1-03 Heartbreak & Jet Lag.m4a",
-            "1-04 Bedtime Story.m4a",
-            "1-05 Voodoo.m4a",
-            "1-06 White.m4a",
-            "1-07 No Love.m4a",
-            "1-08 4 Tears.m4a",
-            "1-09 Acura Integurl.m4a",
-            "1-10 Analog 2 (feat. Tyler, the Creator & Syd).m4a"
-        ];
-
-        const library = document.getElementById('library');
-        const player = document.getElementById('main-player');
-        const info = document.getElementById('song-info');
-
-        songFiles.forEach(fileName => {
-            const safePath = encodeURI(folder + fileName);
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            // Default icon
-            const defaultArt = "https://via.placeholder.com/150/1DB954/FFFFFF?text=Music";
-
-            card.innerHTML = `
-                <img src="${defaultArt}" class="cover">
-                <span class="title">${fileName.replace('.m4a', '').replace('.mp4', '')}</span>
-            `;
-
-            card.onclick = function() {
-                player.src = safePath;
-                player.poster = card.querySelector('img').src; 
-                info.innerText = "Playing: " + fileName;
-                player.play();
-            };
-
-            library.appendChild(card);
-
-            // Attempt to load metadata (covers)
-            try {
-                jsmediatags.read(safePath, {
-                    onSuccess: function(tag) {
-                        const { picture } = tag.tags;
-                        if (picture) {
-                            const { data, format } = picture;
-                            let base = "";
-                            for (let i = 0; i < data.length; i++) base += String.fromCharCode(data[i]);
-                            const artUrl = `data:${format};base64,${window.btoa(base)}`;
-                            card.querySelector('img').src = artUrl;
-                        }
-                    }
-                });
-            } catch (e) { console.log("Skip tags"); }
+        const fileName = songs[currentIndex];
+        source.src = folderPath + fileName;
+        label.innerText = "NOW PLAYING: " + fileName;
+        
+        // Update UI highlights
+        document.querySelectorAll('.song-btn').forEach((btn, i) => {
+            btn.classList.toggle('playing', i === currentIndex);
         });
-    </script>
+
+        player.load();
+        player.play().catch(e => console.log("Autoplay blocked, waiting for user click."));
+    }
+
+    // 3. THE "AUTO-NEXT" LOGIC
+    player.onended = function() {
+        console.log("Song finished. Moving to next...");
+        loadSong(currentIndex + 1);
+    };
+
+    // 4. Create the clickable playlist UI
+    songs.forEach((song, i) => {
+        const btn = document.createElement('button');
+        btn.className = "song-btn";
+        btn.innerText = (i + 1) + ". " + song;
+        btn.onclick = () => loadSong(i);
+        playlistDiv.appendChild(btn);
+    });
+
+    // Start with the first song
+    loadSong(0);
+</script>
+
 </body>
 </html>
