@@ -7,82 +7,69 @@
     <style>
         body { background: #000; color: #0f0; font-family: monospace; text-align: center; margin: 0; padding: 20px; }
         .vault-container { max-width: 600px; margin: auto; }
-        /* The video must be visible and large for Rave to 'see' it */
-        video { width: 100%; height: auto; border: 2px solid #0f0; background: #111; display: block; }
-        #playlist { margin-top: 20px; border-top: 1px solid #444; padding-top: 10px; }
-        .track { background: #111; color: #0f0; border: 1px solid #333; padding: 12px; margin: 5px 0; width: 100%; cursor: pointer; text-align: left; }
-        .track.active { background: #0f0; color: #000; font-weight: bold; }
-        .controls { margin: 10px 0; display: flex; justify-content: space-around; }
-        button.nav { background: #222; color: #0f0; border: 1px solid #0f0; padding: 10px 20px; cursor: pointer; }
+        /* A large, visible player helps the Rave scraper */
+        video { width: 100%; border: 2px solid #0f0; background: #111; display: block; }
+        .song-btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 100%; cursor: pointer; }
+        .playing { background: #0f0; color: #000; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="vault-container">
-    <h1>☣️ UNHOLYCUCUMBER ☣️</h1>
+    <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
 
-    <video id="vPlayer" controls autoplay playsinline preload="auto">
+    <video id="mainPlayer" controls autoplay muted playsinline>
         <source src="Rave_Ready_Videos/1-01 Rocket Love.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
-
-    <div class="controls">
-        <button class="nav" onclick="playNext(-1)">PREV</button>
-        <button class="nav" onclick="playNext(1)">NEXT</button>
-    </div>
 
     <div id="status">UNRESTRICTED ACCESS</div>
     <div id="playlist"></div>
 </div>
 
 <script>
-    // 2. LIST ALL YOUR FILENAMES EXACTLY
+    // 2. MANUALLY LIST YOUR TOP 5 SONGS HERE
     const songs = [
         "1-01 Rocket Love.mp4",
         "1-05 Voodoo.mp4",
         "2-06 Girlfriend_s Best Friend.mp4",
-        "2-07 Good Decoration.mp4"
-        // Add all 10+ here
+        "2-07 Good Decoration.mp4",
+        "2-08 Analog 2.mp4"
     ];
 
     const folder = "Rave_Ready_Videos/";
-    let currentIdx = 0;
-    const v = document.getElementById('vPlayer');
-    const s = document.getElementById('status');
-    const p = document.getElementById('playlist');
+    let currentIndex = 0;
+    const player = document.getElementById('mainPlayer');
+    const status = document.getElementById('status');
+    const list = document.getElementById('playlist');
 
-    function loadTrack(i) {
-        if (i < 0) i = songs.length - 1;
-        if (i >= songs.length) i = 0;
-        currentIdx = i;
-
-        // Update Source
-        v.src = folder + songs[currentIdx];
-        s.innerText = "PLAYING: " + songs[currentIdx];
+    function loadSong(index) {
+        if (index >= songs.length) index = 0;
+        currentIndex = index;
         
-        // Update Buttons
-        document.querySelectorAll('.track').forEach((btn, idx) => {
-            btn.className = (idx === currentIdx) ? "track active" : "track";
+        // When we switch, we un-mute it so you can actually hear it
+        player.muted = false; 
+        player.src = folder + songs[currentIndex];
+        status.innerText = "PLAYING: " + songs[currentIndex];
+        
+        document.querySelectorAll('.song-btn').forEach((btn, i) => {
+            btn.classList.toggle('playing', i === currentIndex);
         });
 
-        v.load();
-        v.play();
+        player.load();
+        player.play();
     }
 
-    function playNext(step) {
-        loadTrack(currentIdx + step);
-    }
+    // AUTO-NEXT
+    player.onended = () => loadSong(currentIndex + 1);
 
-    // THE AUTO-PLAY LOGIC
-    v.onended = () => playNext(1);
-
-    // Initial UI Build
-    songs.forEach((name, i) => {
+    // Create buttons
+    songs.forEach((song, i) => {
         const btn = document.createElement('button');
-        btn.className = i === 0 ? "track active" : "track";
-        btn.innerText = name.replace('.mp4', '');
-        btn.onclick = () => loadTrack(i);
-        p.appendChild(btn);
+        btn.className = "song-btn";
+        btn.innerText = (i + 1) + ". " + song;
+        btn.onclick = () => loadSong(i);
+        list.appendChild(btn);
     });
 </script>
 
