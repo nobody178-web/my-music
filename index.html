@@ -2,84 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unholycucumber Vault</title>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        video { width: 100%; border: 2px solid #0f0; box-shadow: 0 0 15px #0f0; background: #111; }
-        #playlist { margin-top: 20px; display: flex; flex-direction: column; gap: 5px; }
-        .song-btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 12px; cursor: pointer; text-align: left; }
-        .song-btn:hover { background: #0f0; color: #000; }
-        .playing { background: #0f0 !important; color: #000 !important; font-weight: bold; }
-        #status { margin: 15px; font-size: 1.1em; text-transform: uppercase; }
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; margin: 0; padding: 20px; }
+        .vault-container { max-width: 600px; margin: auto; }
+        /* The video must be visible and large for Rave to 'see' it */
+        video { width: 100%; height: auto; border: 2px solid #0f0; background: #111; display: block; }
+        #playlist { margin-top: 20px; border-top: 1px solid #444; padding-top: 10px; }
+        .track { background: #111; color: #0f0; border: 1px solid #333; padding: 12px; margin: 5px 0; width: 100%; cursor: pointer; text-align: left; }
+        .track.active { background: #0f0; color: #000; font-weight: bold; }
+        .controls { margin: 10px 0; display: flex; justify-content: space-around; }
+        button.nav { background: #222; color: #0f0; border: 1px solid #0f0; padding: 10px 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
-    
-    <video id="mainPlayer" controls autoplay playsinline>
-        <source id="videoSource" src="Rave_Ready_Videos/1-05 Voodoo.mp4" type="video/mp4">
+<div class="vault-container">
+    <h1>☣️ UNHOLYCUCUMBER ☣️</h1>
+
+    <video id="vPlayer" controls autoplay playsinline preload="auto">
+        <source src="Rave_Ready_Videos/1-01 Rocket Love.mp4" type="video/mp4">
+        Your browser does not support the video tag.
     </video>
 
-    <div id="status">Ready to play</div>
+    <div class="controls">
+        <button class="nav" onclick="playNext(-1)">PREV</button>
+        <button class="nav" onclick="playNext(1)">NEXT</button>
+    </div>
+
+    <div id="status">UNRESTRICTED ACCESS</div>
     <div id="playlist"></div>
 </div>
 
 <script>
-    const folder = "Rave_Ready_Videos/";
-    
-    // 1. ADD YOUR SONG FILENAMES HERE MANUALLY
+    // 2. LIST ALL YOUR FILENAMES EXACTLY
     const songs = [
+        "1-01 Rocket Love.mp4",
         "1-05 Voodoo.mp4",
         "2-06 Girlfriend_s Best Friend.mp4",
-        "2-07 Good Decoration.mp4",
-        "1-01 Rocket Love.mp4"
+        "2-07 Good Decoration.mp4"
+        // Add all 10+ here
     ];
 
-    let currentIndex = 0;
-    const player = document.getElementById('mainPlayer');
-    const source = document.getElementById('videoSource');
-    const statusLabel = document.getElementById('status');
-    const playlistDiv = document.getElementById('playlist');
+    const folder = "Rave_Ready_Videos/";
+    let currentIdx = 0;
+    const v = document.getElementById('vPlayer');
+    const s = document.getElementById('status');
+    const p = document.getElementById('playlist');
 
-    function loadSong(index) {
-        if (index >= songs.length) index = 0;
-        currentIndex = index;
+    function loadTrack(i) {
+        if (i < 0) i = songs.length - 1;
+        if (i >= songs.length) i = 0;
+        currentIdx = i;
+
+        // Update Source
+        v.src = folder + songs[currentIdx];
+        s.innerText = "PLAYING: " + songs[currentIdx];
         
-        const songName = songs[currentIndex];
-        player.src = folder + songName;
-        statusLabel.innerText = "NOW PLAYING: " + songName;
-        
-        // Update UI
-        document.querySelectorAll('.song-btn').forEach((btn, i) => {
-            btn.classList.toggle('playing', i === currentIndex);
+        // Update Buttons
+        document.querySelectorAll('.track').forEach((btn, idx) => {
+            btn.className = (idx === currentIdx) ? "track active" : "track";
         });
 
-        player.load();
-        player.play().catch(e => console.log("Autoplay blocked. Tap play."));
+        v.load();
+        v.play();
     }
 
-    // THE AUTO-NEXT LOGIC
-    player.onended = () => {
-        console.log("Track finished. Loading next...");
-        loadSong(currentIndex + 1);
-    };
+    function playNext(step) {
+        loadTrack(currentIdx + step);
+    }
 
-    // Generate Buttons
-    songs.forEach((song, i) => {
+    // THE AUTO-PLAY LOGIC
+    v.onended = () => playNext(1);
+
+    // Initial UI Build
+    songs.forEach((name, i) => {
         const btn = document.createElement('button');
-        btn.className = "song-btn";
-        btn.innerText = (i + 1) + ". " + song.replace('.mp4', '');
-        btn.onclick = () => loadSong(i);
-        playlistDiv.appendChild(btn);
-    });
-
-    // Initialize UI highlight for the first song
-    document.addEventListener('DOMContentLoaded', () => {
-        statusLabel.innerText = "NOW PLAYING: " + songs[0];
-        document.querySelectorAll('.song-btn')[0].classList.add('playing');
+        btn.className = i === 0 ? "track active" : "track";
+        btn.innerText = name.replace('.mp4', '');
+        btn.onclick = () => loadTrack(i);
+        p.appendChild(btn);
     });
 </script>
 
