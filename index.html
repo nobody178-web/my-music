@@ -1,89 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Unholycucumber Unreleased Vault</title>
-    <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; text-align: center; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        video { width: 100%; border: 2px solid #0f0; box-shadow: 0 0 15px #0f0; border-radius: 8px; }
-        #playlist { margin-top: 30px; list-style: none; padding: 0; text-align: left; }
-        .song-btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 100%; cursor: pointer; text-align: left; }
-        .song-btn:hover { background: #0f0; color: #000; }
-        .playing { background: #0f0 !important; color: #000 !important; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
-    
-    <video id="mainPlayer" controls autoplay>
-        <source id="videoSource" src="" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-
-    <h3 id="nowPlaying">Loading Playlist...</h3>
-
-    <div id="playlist">
-        </div>
-</div>
+<script src="playlist.js"></script>
 
 <script>
-    // 1. LIST ALL YOUR FILENAMES HERE
-    // Use the exact names from your 'Rave_Ready_Videos' folder
+    // Now 'songs' is automatically loaded from playlist.js!
     const folderPath = "Rave_Ready_Videos/";
-    const songs = [
-        "1-05 Voodoo.mp4",
-        "2-06 Girlfriend_s Best Friend.mp4",
-        "2-07 Good Decoration.mp4",
-        "1-01 Rocket Love.mp4",
-        "1-10 Analog 2.mp4" 
-        // Add all 10+ names here!
-    ];
-
     let currentIndex = 0;
+    
     const player = document.getElementById('mainPlayer');
     const source = document.getElementById('videoSource');
     const label = document.getElementById('nowPlaying');
     const playlistDiv = document.getElementById('playlist');
 
-    // 2. Load the first song automatically
     function loadSong(index) {
-        if (index >= songs.length) index = 0; // Loop back to the first song
+        if (index >= songs.length) index = 0;
         currentIndex = index;
         
-        const fileName = songs[currentIndex];
-        source.src = folderPath + fileName;
-        label.innerText = "NOW PLAYING: " + fileName;
+        source.src = folderPath + songs[currentIndex];
+        label.innerText = "NOW PLAYING: " + songs[currentIndex];
         
-        // Update UI highlights
         document.querySelectorAll('.song-btn').forEach((btn, i) => {
             btn.classList.toggle('playing', i === currentIndex);
         });
 
         player.load();
-        player.play().catch(e => console.log("Autoplay blocked, waiting for user click."));
+        player.play();
     }
 
-    // 3. THE "AUTO-NEXT" LOGIC
-    player.onended = function() {
-        console.log("Song finished. Moving to next...");
-        loadSong(currentIndex + 1);
-    };
+    player.onended = () => loadSong(currentIndex + 1);
 
-    // 4. Create the clickable playlist UI
+    // Create UI buttons dynamically from the list
     songs.forEach((song, i) => {
         const btn = document.createElement('button');
         btn.className = "song-btn";
-        btn.innerText = (i + 1) + ". " + song;
+        btn.innerText = (i + 1) + ". " + song.replace('.mp4', '');
         btn.onclick = () => loadSong(i);
         playlistDiv.appendChild(btn);
     });
 
-    // Start with the first song
     loadSong(0);
 </script>
-
-</body>
-</html>
