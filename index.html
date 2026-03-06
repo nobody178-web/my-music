@@ -1,10 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unholycucumber Vault</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: auto; }
+        .art-box { width: 280px; height: 280px; margin: 20px auto; border: 2px solid #0f0; box-shadow: 0 0 20px #0f0; background: url('mega_cover.jpg') center/cover; }
+        h1 { font-size: 1.5rem; letter-spacing: 3px; margin-top: 10px; }
+        audio { width: 100%; margin: 20px 0; filter: invert(1) hue-rotate(90deg); }
+        .playlist { text-align: left; background: #111; border: 1px solid #333; border-radius: 5px; max-height: 450px; overflow-y: auto; }
+        .track { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; font-size: 0.9rem; }
+        .track:hover { background: #0f02; }
+        .active { color: #fff; background: #0f04 !important; border-left: 4px solid #0f0; }
+        #status { font-size: 0.8rem; color: #888; margin-top: 5px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
+    <div class="art-box"></div>
+    <div id="status">INITIALIZING...</div>
+
+    <audio id="audioPlayer" controls playsinline></audio>
+
+    <div class="playlist" id="trackList">
+        <div style="padding:20px; text-align:center;">Scanning GitHub Directory...</div>
+    </div>
+</div>
+
 <script>
     const user = "nobody178-web";
     const repo = "my-music";
     const folder = "Rave_Ready_Videos";
     
     const player = document.getElementById('audioPlayer');
-    const status = document.getElementById('status');
+    const statusBox = document.getElementById('status');
     const trackList = document.getElementById('trackList');
 
     let songs = [];
@@ -12,14 +45,28 @@
 
     async function loadVault() {
         try {
-            // We use the API to get the names...
+            statusBox.innerText = "FETCHING REPO DATA...";
             const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${folder}`);
+            
+            if (!res.ok) throw new Error("Folder not found");
+            
             const data = await res.json();
-            songs = data.filter(f => f.name.toLowerCase().endswith('.mp4')).map(f => f.name);
-            renderPlaylist();
-            status.innerText = `${songs.length} TRACKS READY`;
+            
+            // --- FIX: Correcting the filter logic ---
+            songs = data
+                .filter(file => file.name.toLowerCase().endsWith('.mp4'))
+                .map(file => file.name);
+            
+            if (songs.length === 0) {
+                trackList.innerHTML = "<div style='padding:20px;'>No .mp4 files found in folder.</div>";
+            } else {
+                renderPlaylist();
+                statusBox.innerText = songs.length + " TRACKS LOADED";
+            }
         } catch (err) {
-            status.innerText = "OFFLINE MODE";
+            console.error(err);
+            statusBox.innerText = "ERROR: " + err.message;
+            trackList.innerHTML = "<div style='padding:20px;'>Check folder name or GitHub API limit.</div>";
         }
     }
 
@@ -35,35 +82,21 @@
     }
 
     function playTrack(index) {
+        if (index >= songs.length) index = 0;
         currentIndex = index;
-        
-        // --- THE FIX ---
-        // Instead of the 'media' URL, we use the local path. 
-        // This works because the website and the videos are in the same repo.
-        player.src = `${folder}/${songs[index]}`;
+
+        // --- THE RELATIVE PATH FIX ---
+        player.src = folder + "/" + songs[index];
         
         player.load();
         player.play().catch(e => {
-            status.innerText = "TAP TO PLAY";
-            console.log("Autoplay prevented:", e);
+            statusBox.innerText = "TAP TO START PLAYBACK";
         });
         
-        status.innerText = "PLAYING: " + songs[index];
+        statusBox.innerText = "PLAYING: " + songs[index];
 
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: songs[index].replace('.mp4', ''),
                 artist: 'Unholycucumber',
-                artwork: [{ src: 'mega_cover.jpg', sizes: '512x512', type: 'image/jpg' }]
-            });
-        }
-
-        document.querySelectorAll('.track').forEach((t, i) => {
-            t.classList.toggle('active', i === index);
-        });
-    }
-
-    player.onended = () => playTrack(currentIndex + 1);
-
-    loadVault();
-</script>
+                artwork: [{ src: 'mega_cover.jpg', sizes: '
