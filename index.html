@@ -5,72 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unholycucumber Vault</title>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; text-align: center; margin: 0; padding: 20px; }
-        .vault-container { max-width: 600px; margin: auto; }
-        /* A large, visible player helps the Rave scraper */
-        video { width: 100%; border: 2px solid #0f0; background: #111; display: block; }
-        .song-btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; width: 100%; cursor: pointer; }
-        .playing { background: #0f0; color: #000; font-weight: bold; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: auto; }
+        .art-box { width: 280px; height: 280px; margin: 20px auto; border: 2px solid #0f0; box-shadow: 0 0 20px #0f0; background: url('mega_cover.jpg') center/cover; }
+        h1 { font-size: 1.5rem; letter-spacing: 3px; margin-top: 10px; }
+        
+        /* Audio Player Styling */
+        audio { width: 100%; margin: 20px 0; filter: invert(1) hue-rotate(90deg); }
+        
+        /* Playlist Styling */
+        .playlist { text-align: left; background: #111; border: 1px solid #333; border-radius: 5px; max-height: 400px; overflow-y: auto; }
+        .track { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; }
+        .track:hover { background: #0f02; }
+        .active { color: #fff; background: #0f04 !important; border-left: 4px solid #0f0; }
+        
+        /* Rave Link Styling */
+        .rave-zone { margin-top: 40px; padding: 20px; border: 1px dashed #0f0; border-radius: 10px; }
+        .rave-btn { display: inline-block; background: #0f0; color: #000; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px; margin-top: 10px; }
+        #status { font-size: 0.8rem; color: #888; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="vault-container">
+<div class="container">
     <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
+    
+    <div class="art-box" id="coverArt"></div>
+    <div id="status">INITIALIZING SYSTEM...</div>
 
-    <video id="mainPlayer" controls autoplay muted playsinline>
-        <source src="Rave_Ready_Videos/1-01 Rocket Love.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <audio id="audioPlayer" controls playsinline></audio>
 
-    <div id="status">UNRESTRICTED ACCESS</div>
-    <div id="playlist"></div>
+    <div class="playlist" id="trackList">
+        </div>
+
+    <div class="rave-zone">
+        <h3>🔗 RAVE PARTY MODE</h3>
+        <p style="font-size: 0.8rem;">Copy the link below and paste it into Rave for the full synced Mega-Mix:</p>
+        <a href="UNHOLYCUCUMBER_FINAL_VAULT.mp4" class="rave-btn" id="raveLink">COPY DIRECT LINK</a>
+        <div id="raveUrlDisplay" style="font-size: 0.7rem; margin-top: 10px; color: #555;"></div>
+    </div>
 </div>
 
 <script>
-    // 2. MANUALLY LIST YOUR TOP 5 SONGS HERE
-    const songs = [
-        "1-01 Rocket Love.mp4",
-        "1-05 Voodoo.mp4",
-        "2-06 Girlfriend_s Best Friend.mp4",
-        "2-07 Good Decoration.mp4",
-        "2-08 Analog 2.mp4"
-    ];
-
-    const folder = "Rave_Ready_Videos/";
-    let currentIndex = 0;
-    const player = document.getElementById('mainPlayer');
+    const user = "nobody178-web";
+    const repo = "my-music";
+    const folder = "Rave_Ready_Videos";
+    
+    const player = document.getElementById('audioPlayer');
     const status = document.getElementById('status');
-    const list = document.getElementById('playlist');
+    const trackList = document.getElementById('trackList');
+    const raveLink = document.getElementById('raveLink');
+    const raveDisplay = document.getElementById('raveUrlDisplay');
 
-    function loadSong(index) {
-        if (index >= songs.length) index = 0;
-        currentIndex = index;
-        
-        // When we switch, we un-mute it so you can actually hear it
-        player.muted = false; 
-        player.src = folder + songs[currentIndex];
-        status.innerText = "PLAYING: " + songs[currentIndex];
-        
-        document.querySelectorAll('.song-btn').forEach((btn, i) => {
-            btn.classList.toggle('playing', i === currentIndex);
-        });
+    let songs = [];
+    let currentIndex = 0;
 
-        player.load();
-        player.play();
+    // 1. Fetch individual songs for the background playlist
+    async function loadVault() {
+        try {
+            const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${folder}`);
+            const data = await res.json();
+            songs = data.filter(f => f.name.toLowerCase().endsWith('.mp4')).map(f => f.name);
+            
+            renderPlaylist();
+            status.innerText = `VAULT ACCESSED: ${songs.length} TRACKS FOUND`;
+            
+            // Set the absolute URL for the Rave Link display
+            const directUrl = `https://${user}.github.io/${repo}/UNHOLYCUCUMBER_FINAL_VAULT.mp4`;
+            raveDisplay.innerText = directUrl;
+        } catch (err) {
+            status.innerText = "SYSTEM ERROR: ACCESS DENIED";
+        }
     }
 
-    // AUTO-NEXT
-    player.onended = () => loadSong(currentIndex + 1);
+    function renderPlaylist() {
+        trackList.innerHTML = "";
+        songs.forEach((song, i) => {
+            const item = document.createElement('div');
+            item.className = 'track';
+            item.innerHTML = `<span>${i + 1}. ${song.replace('.mp4', '')}</span><span>▶</span>`;
+            item.onclick = () => playTrack(i);
+            trackList.appendChild(item);
+        });
+    }
 
-    // Create buttons
-    songs.forEach((song, i) => {
-        const btn = document.createElement('button');
-        btn.className = "song-btn";
-        btn.innerText = (i + 1) + ". " + song;
-        btn.onclick = () => loadSong(i);
-        list.appendChild(btn);
-    });
+    function playTrack(index) {
+        currentIndex = index;
+        player.src = `${folder}/${songs[index]}`;
+        player.play();
+        
+        // Update Metadata for iOS/Android Lock Screen
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: songs[index].replace('.mp4', ''),
+                artist: 'Unholycucumber Vault',
+                artwork: [{ src: 'mega_cover.jpg', sizes: '512x512', type: 'image/jpg' }]
+            });
+        }
+
+        // Highlight active track
+        document.querySelectorAll('.track').forEach((t, i) => {
+            t.classList.toggle('active', i === index);
+        });
+    }
+
+    // Auto-play next song (works in background)
+    player.onended = () => {
+        if (currentIndex < songs.length - 1) playTrack(currentIndex + 1);
+    };
+
+    loadVault();
 </script>
 
 </body>
