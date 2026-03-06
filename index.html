@@ -11,7 +11,7 @@
         h1 { font-size: 1.5rem; letter-spacing: 3px; margin-top: 10px; }
         audio { width: 100%; margin: 20px 0; filter: invert(1) hue-rotate(90deg); }
         .playlist { text-align: left; background: #111; border: 1px solid #333; border-radius: 5px; max-height: 450px; overflow-y: auto; }
-        .track { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; font-size: 0.9rem; }
+        .track { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; font-size: 0.9rem; }
         .track:hover { background: #0f02; }
         .active { color: #fff; background: #0f04 !important; border-left: 4px solid #0f0; }
         #status { font-size: 0.8rem; color: #888; margin-top: 5px; text-transform: uppercase; }
@@ -22,81 +22,75 @@
 <div class="container">
     <h1>☣️ UNHOLYCUCUMBER VAULT ☣️</h1>
     <div class="art-box"></div>
-    <div id="status">INITIALIZING...</div>
+    <div id="status">VAULT ONLINE</div>
 
     <audio id="audioPlayer" controls playsinline></audio>
 
-    <div class="playlist" id="trackList">
-        <div style="padding:20px; text-align:center;">Scanning GitHub Directory...</div>
-    </div>
+    <div class="playlist" id="trackList"></div>
 </div>
 
+<script src="playlist.js"></script>
+
 <script>
-    const user = "nobody178-web";
-    const repo = "my-music";
     const folder = "Rave_Ready_Videos";
-    
     const player = document.getElementById('audioPlayer');
     const statusBox = document.getElementById('status');
     const trackList = document.getElementById('trackList');
-
-    let songs = [];
     let currentIndex = 0;
-
-    async function loadVault() {
-        try {
-            statusBox.innerText = "FETCHING REPO DATA...";
-            const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${folder}`);
-            
-            if (!res.ok) throw new Error("Folder not found");
-            
-            const data = await res.json();
-            
-            // --- FIX: Correcting the filter logic ---
-            songs = data
-                .filter(file => file.name.toLowerCase().endsWith('.mp4'))
-                .map(file => file.name);
-            
-            if (songs.length === 0) {
-                trackList.innerHTML = "<div style='padding:20px;'>No .mp4 files found in folder.</div>";
-            } else {
-                renderPlaylist();
-                statusBox.innerText = songs.length + " TRACKS LOADED";
-            }
-        } catch (err) {
-            console.error(err);
-            statusBox.innerText = "ERROR: " + err.message;
-            trackList.innerHTML = "<div style='padding:20px;'>Check folder name or GitHub API limit.</div>";
-        }
-    }
 
     function renderPlaylist() {
         trackList.innerHTML = "";
+        // 'songs' comes from your playlist.js file
         songs.forEach((song, i) => {
             const item = document.createElement('div');
             item.className = 'track';
-            item.innerHTML = `<span>${i + 1}. ${song.replace('.mp4', '')}</span><span>▶</span>`;
+            const displayName = song.replace('.mp4', '');
+            item.innerHTML = `<span>${i + 1}. ${displayName}</span><span>▶</span>`;
             item.onclick = () => playTrack(i);
             trackList.appendChild(item);
         });
     }
 
     function playTrack(index) {
-        if (index >= songs.length) index = 0;
+        if (index >= songs.length) index = 0; 
         currentIndex = index;
 
-        // --- THE RELATIVE PATH FIX ---
-        player.src = folder + "/" + songs[index];
+        // Pathing with URL encoding for special characters (like '&' or spaces)
+        player.src = folder + "/" + encodeURIComponent(songs[index]);
         
         player.load();
         player.play().catch(e => {
             statusBox.innerText = "TAP TO START PLAYBACK";
         });
         
-        statusBox.innerText = "PLAYING: " + songs[index];
+        statusBox.innerText = "PLAYING: " + songs[index].replace('.mp4', '');
 
+        // UPDATE LOCK SCREEN (iOS/Android)
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: songs[index].replace('.mp4', ''),
                 artist: 'Unholycucumber',
-                artwork: [{ src: 'mega_cover.jpg', sizes: '
+                artwork: [{ src: 'mega_cover.jpg', sizes: '512x512', type: 'image/jpg' }]
+            });
+        }
+
+        document.querySelectorAll('.track').forEach((t, i) => {
+            t.classList.toggle('active', i === index);
+        });
+    }
+
+    // This makes it play one by one automatically!
+    player.onended = () => {
+        playTrack(currentIndex + 1);
+    };
+
+    // Start the UI
+    if (typeof songs !== 'undefined') {
+        renderPlaylist();
+    } else {
+        statusBox.innerText = "ERROR: PLAYLIST.JS NOT FOUND";
+    }
+</script>
+
+</body>
+</html>
